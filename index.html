@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED CLOCK</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&amp;display=swap');
+        
+        :root {
+            --led-color: #11ff99;
+        }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #1c1c28;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+        
+        .clock-container {
+            width: 420px;
+            background: #222227;
+            border: 28px solid #38383f;
+            border-top-color: #4a4a52;
+            border-radius: 22px;
+            box-shadow: 
+                0 25px 50px -12px rgb(0 0 0 / 50%),
+                0 0 0 12px #1a1a1f,
+                inset 0 8px 15px rgba(255,255,255,0.06),
+                inset 0 -8px 15px rgba(0,0,0,0.6);
+            padding: 28px 24px 32px;
+            position: relative;
+        }
+        
+        .clock-container::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 6px;
+            background: #2c2c34;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .digital-display {
+            background: #0a0f0a;
+            border: 5px solid #1f2521;
+            border-radius: 10px;
+            padding: 14px 22px;
+            margin-bottom: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 
+                inset 0 6px 12px rgba(0, 0, 0, 0.9),
+                0 0 22px rgba(17, 255, 153, 0.25);
+            position: relative;
+        }
+        
+        .digital-display::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                rgba(17, 255, 153, 0.04) 0%,
+                transparent 50%,
+                rgba(17, 255, 153, 0.04) 100%
+            );
+            pointer-events: none;
+            animation: led-flicker 3s infinite alternate;
+        }
+        
+        .digit {
+            font-family: 'VT323', monospace;
+            font-size: 56px;
+            font-weight: 400;
+            color: var(--led-color);
+            text-shadow: 
+                0 0 6px var(--led-color),
+                0 0 14px var(--led-color),
+                0 0 24px var(--led-color);
+            min-width: 58px;
+            text-align: center;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+        
+        .colon {
+            font-family: 'VT323', monospace;
+            font-size: 52px;
+            color: var(--led-color);
+            text-shadow: 
+                0 0 6px var(--led-color),
+                0 0 18px var(--led-color);
+            animation: blink 1s step-start infinite;
+            padding-top: 4px;
+            line-height: 1;
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #16161a;
+            border-radius: 12px;
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.5),
+                inset 0 10px 20px rgba(255,255,255,0.08),
+                inset 0 -10px 20px rgba(0,0,0,0.5);
+        }
+        
+        .clock-label {
+            text-align: center;
+            margin-top: 18px;
+            color: #555;
+            font-size: 11px;
+            letter-spacing: 3px;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+        
+        @keyframes blink {
+            50% {
+                opacity: 0.15;
+            }
+        }
+        
+        @keyframes led-flicker {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .clock-frame-bottom {
+            height: 6px;
+            background: #18181d;
+            margin: 22px auto 0;
+            width: 60%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="digital-display" id="digital-display">
+            <span id="hours" class="digit">00</span>
+            <span class="colon">:</span>
+            <span id="minutes" class="digit">00</span>
+            <span class="colon">:</span>
+            <span id="seconds" class="digit">00</span>
+        </div>
+        
+        <canvas id="analog-canvas" width="320" height="320"></canvas>
+        
+        <div class="clock-label">QUARTZ • ANALOG • DIGITAL</div>
+        <div class="clock-frame-bottom"></div>
+    </div>
+
+    <script>
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+        const canvas = document.getElementById('analog-canvas');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        
+        const WIDTH = 320;
+        const HEIGHT = 320;
+        const CENTER_X = WIDTH / 2;
+        const CENTER_Y = HEIGHT / 2;
+        const RADIUS = 138;
+        
+        function drawAnalog(now) {
+            ctx.save();
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+            
+            // Outer bevel ring
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, RADIUS + 18, 0, Math.PI * 2);
+            ctx.fillStyle = '#2a2a32';
+            ctx.fill();
+            
+            // Main clock face
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, RADIUS + 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#1c1c22';
+            ctx.fill();
+            ctx.strokeStyle = '#555566';
+            ctx.lineWidth = 14;
+            ctx.stroke();
+            
+            // Inner face
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = '#222228';
+            ctx.fill();
+            
+            // Subtle inner rim highlight
+            ctx.strokeStyle = '#444455';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Tick marks
+            ctx.strokeStyle = '#bbbbcc';
+            ctx.lineCap = 'round';
+            
+            // 60 ticks
+            for (let i = 0; i < 60; i++) {
+                const angle = (i * Math.PI * 2 / 60) - (Math.PI / 2);
+                const isMajor = i % 5 === 0;
+                
+                const innerRadius = RADIUS - (isMajor ? 26 : 14);
+                const outerRadius = RADIUS - (isMajor ? 4 : 6);
+                
+                const x1 = CENTER_X + Math.cos(angle) * outerRadius;
+                const y1 = CENTER_Y + Math.sin(angle) * outerRadius;
+                const x2 = CENTER_X + Math.cos(angle) * innerRadius;
+                const y2 = CENTER_Y + Math.sin(angle) * innerRadius;
+                
+                ctx.beginPath();
+                ctx.lineWidth = isMajor ? 5 : 2.5;
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Hour numbers
+            ctx.fillStyle = '#e8e8ee';
+            ctx.font = '700 21px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * (Math.PI * 2 / 12)) - (Math.PI / 2);
+                const textX = CENTER_X + Math.cos(angle) * (RADIUS - 52);
+                const textY = CENTER_Y + Math.sin(angle) * (RADIUS - 52);
+                
+                let num = i.toString();
+                ctx.fillText(num, textX, textY);
+            }
+            
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            // Hour angle
+            const hourAngle = ((hours * 30) + (minutes * 0.5) + (seconds * 0.008333)) * (Math.PI / 180) - (Math.PI / 2);
+            // Minute angle
+            const minAngle = ((minutes * 6) + (seconds * 0.1)) * (Math.PI / 180) - (Math.PI / 2);
+            // Second angle
+            const secAngle = (seconds * 6) * (Math.PI / 180) - (Math.PI / 2);
+            
+            // Draw hour hand
+            ctx.save();
+            ctx.translate(CENTER_X, CENTER_Y);
+            ctx.rotate(hourAngle);
+            ctx.shadowColor = 'rgba(200, 210, 220, 0.6)';
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = '#e0e0e8';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 8);
+            ctx.lineTo(52, 0);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Draw minute hand
+            ctx.save();
+            ctx.translate(CENTER_X, CENTER_Y);
+            ctx.rotate(minAngle);
+            ctx.shadowColor = 'rgba(200, 210, 220, 0.6)';
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = '#e0e0e8';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 8);
+            ctx.lineTo(98, 0);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Draw second hand
+            ctx.save();
+            ctx.translate(CENTER_X, CENTER_Y);
+            ctx.rotate(secAngle);
+            ctx.shadowColor = '#ff4455';
+            ctx.shadowBlur = 12;
+            ctx.strokeStyle = '#ff4455';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 12);
+            ctx.lineTo(118, 0);
+            ctx.stroke();
+            
+            // Second hand tail
+            ctx.beginPath();
+            ctx.moveTo(0, -22);
+            ctx.lineTo(0, 12);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Center cap
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 13, 0, Math.PI * 2);
+            ctx.fillStyle = '#1c1c22';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#555566';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#111114';
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        function updateDigital(now) {
+            let h = now.getHours().toString().padStart(2, '0');
+            let m = now.getMinutes().toString().padStart(2, '0');
+            let s = now.getSeconds().toString().padStart(2, '0');
+            
+            hoursEl.textContent = h;
+            minutesEl.textContent = m;
+            secondsEl.textContent = s;
+        }
+        
+        function tick() {
+            const now = new Date();
+            updateDigital(now);
+            drawAnalog(now);
+        }
+        
+        function init() {
+            // Initial render
+            const now = new Date();
+            updateDigital(now);
+            drawAnalog(now);
+            
+            // Update every second
+            setInterval(tick, 1000);
+        }
+        
+        // Start the clock
+        window.onload = init;
+    </script>
+</body>
+</html>

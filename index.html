@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analog Clock</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap');
+        
+        :root {
+            --primary: #2c3e50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+            background: linear-gradient(135deg, #1e2937, #334155);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            color: #f1f5f9;
+        }
+        
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4),
+                        0 0 0 1px rgba(255,255,255,0.1) inset;
+            backdrop-filter: blur(12px);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #e0f2fe, #bae6fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 32px;
+            font-weight: 400;
+        }
+        
+        canvas {
+            border-radius: 50%;
+            background: #f8fafc;
+            box-shadow: 
+                0 10px 15px -3px rgb(0 0 0 / 0.3),
+                0 4px 6px -4px rgb(0 0 0 / 0.3),
+                inset 0 4px 8px rgba(255,255,255,0.9),
+                inset 0 -4px 8px rgba(0,0,0,0.1);
+            border: 12px solid #1e2937;
+        }
+        
+        .footer {
+            margin-top: 28px;
+            font-size: 0.8rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        
+        .digital-time {
+            font-family: monospace;
+            font-size: 1.1rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 6px 18px;
+            border-radius: 9999px;
+            color: #e0f2fe;
+            letter-spacing: 3px;
+            min-width: 110px;
+        }
+        
+        @media (max-width: 480px) {
+            canvas {
+                width: 280px;
+                height: 280px;
+            }
+            
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Analog Clock</h1>
+        <p class="subtitle">Real-time • Canvas rendered</p>
+        
+        <canvas id="clock" width="420" height="420"></canvas>
+        
+        <div class="footer">
+            <div class="digital-time" id="digital">00:00:00</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('clock');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        const CENTER_X = 210;
+        const CENTER_Y = 210;
+        const RADIUS = 185;
+        
+        let lastTime = null;
+        
+        function drawClock() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const milliseconds = now.getMilliseconds();
+            
+            // Smooth second hand movement
+            const smoothSeconds = seconds + (milliseconds / 1000);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Save context state
+            ctx.save();
+            ctx.translate(CENTER_X, CENTER_Y);
+            
+            // Draw outer rim shadow
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.3)';
+            ctx.shadowBlur = 25;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 15;
+            
+            // Main clock face
+            ctx.beginPath();
+            ctx.arc(0, 0, RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+            
+            // Inner rim
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.beginPath();
+            ctx.arc(0, 0, RADIUS - 12, 0, Math.PI * 2);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 22;
+            ctx.stroke();
+            
+            // Face base color
+            ctx.beginPath();
+            ctx.arc(0, 0, RADIUS - 24, 0, Math.PI * 2);
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fill();
+            
+            // Subtle inner shadow
+            const innerGradient = ctx.createRadialGradient(
+                -25, -25, 10,
+                30, 30, RADIUS - 25
+            );
+            innerGradient.addColorStop(0, 'rgba(255,255,255,0.9)');
+            innerGradient.addColorStop(1, 'rgba(148, 163, 184, 0.12)');
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, RADIUS - 25, 0, Math.PI * 2);
+            ctx.fillStyle = innerGradient;
+            ctx.fill();
+            
+            // Hour markers
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineCap = 'round';
+            
+            for (let i = 0; i < 12; i++) {
+                const angle = (i * Math.PI / 6) - (Math.PI / 2);
+                const x1 = Math.cos(angle) * (RADIUS - 48);
+                const y1 = Math.sin(angle) * (RADIUS - 48);
+                const x2 = Math.cos(angle) * (RADIUS - 18);
+                const y2 = Math.sin(angle) * (RADIUS - 18);
+                
+                ctx.beginPath();
+                ctx.lineWidth = i % 3 === 0 ? 7 : 4;
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Minute markers
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2.5;
+            
+            for (let i = 0; i < 60; i++) {
+                if (i % 5 === 0) continue;
+                
+                const angle = (i * Math.PI / 30) - (Math.PI / 2);
+                const x1 = Math.cos(angle) * (RADIUS - 38);
+                const y1 = Math.sin(angle) * (RADIUS - 38);
+                const x2 = Math.cos(angle) * (RADIUS - 24);
+                const y2 = Math.sin(angle) * (RADIUS - 24);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Calculate hand angles (0 = 3 o'clock, subtract PI/2 to start at 12)
+            const secondAngle = ((smoothSeconds * Math.PI) / 30) - (Math.PI / 2);
+            const minuteAngle = ((minutes * Math.PI) / 30) + ((smoothSeconds * Math.PI) / 1800) - (Math.PI / 2);
+            const hourAngle = ((hours * Math.PI) / 6) + ((minutes * Math.PI) / 360) + ((smoothSeconds * Math.PI) / 21600) - (Math.PI / 2);
+            
+            // Draw hour hand
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.3)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 6;
+            
+            ctx.strokeStyle = '#1e2937';
+            ctx.lineWidth = 13;
+            ctx.lineCap = 'round';
+            
+            const hourLength = RADIUS * 0.48;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(
+                Math.cos(hourAngle) * hourLength,
+                Math.sin(hourAngle) * hourLength
+            );
+            ctx.stroke();
+            
+            // Draw minute hand
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 5;
+            
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 8;
+            
+            const minuteLength = RADIUS * 0.68;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(
+                Math.cos(minuteAngle) * minuteLength,
+                Math.sin(minuteAngle) * minuteLength
+            );
+            ctx.stroke();
+            
+            // Draw second hand
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 3;
+            
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3.5;
+            
+            const secondLength = RADIUS * 0.78;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(
+                Math.cos(secondAngle) * secondLength,
+                Math.sin(secondAngle) * secondLength
+            );
+            ctx.stroke();
+            
+            // Second hand tip dot
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(
+                Math.cos(secondAngle) * secondLength * 0.95,
+                Math.sin(secondAngle) * secondLength * 0.95,
+                4.5,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Center hub
+            const hubGradient = ctx.createRadialGradient(-3, -3, 2, 6, 8, 22);
+            hubGradient.addColorStop(0, '#e2e8f0');
+            hubGradient.addColorStop(1, '#475569');
+            
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.4)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 4;
+            
+            ctx.fillStyle = hubGradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, 17, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner center dot
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#1e2937';
+            ctx.beginPath();
+            ctx.arc(0, 0, 7, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Restore context
+            ctx.restore();
+            
+            // Update digital time
+            updateDigitalTime(now);
+        }
+        
+        function updateDigitalTime(date) {
+            const digitalEl = document.getElementById('digital');
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            let seconds = date.getSeconds();
+            
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            digitalEl.textContent = timeString;
+        }
+        
+        function animate() {
+            drawClock();
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize and start the clock
+        function init() {
+            // Initial draw
+            drawClock();
+            
+            // Use requestAnimationFrame for smooth updates
+            // Even though it updates every second, the smooth seconds hand requires ~60fps
+            animate();
+            
+            // Fallback interval in case requestAnimationFrame is blocked
+            setInterval(() => {
+                if (document.visibilityState === 'hidden') {
+                    drawClock();
+                }
+            }, 1000);
+            
+            // Keyboard accessibility - press space to toggle pause (demo)
+            let paused = false;
+            let intervalId = null;
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    paused = !paused;
+                    
+                    if (paused) {
+                        canvas.style.opacity = 0.4;
+                    } else {
+                        canvas.style.opacity = 1;
+                    }
+                }
+                
+                if (e.key === '/' && e.metaKey) {
+                    console.log('%cAnalog Clock running smoothly ✅', 'color:#64748b; font-size:10px');
+                }
+            });
+            
+            // Touch support for mobile - tap to show current time briefly
+            let tapCount = 0;
+            canvas.addEventListener('touchstart', function(e) {
+                tapCount++;
+                if (tapCount > 3) {
+                    canvas.style.transform = 'scale(1.03)';
+                    setTimeout(() => {
+                        canvas.style.transform = 'scale(1)';
+                    }, 180);
+                    tapCount = 0;
+                }
+            });
+            
+            // Make canvas focusable
+            canvas.setAttribute('tabindex', '0');
+        }
+        
+        // Start the application
+        window.onload = init;
+    </script>
+</body>
+</html>

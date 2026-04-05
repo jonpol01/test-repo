@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rain Clock</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap');
+        
+        :root {
+            --clock-size: 300px;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: #0a1428;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-family: 'Press Start 2P', system-ui;
+            color: #e0f2fe;
+        }
+        
+        /* Rain layers */
+        .rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .rain-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .rain-layer.back {
+            z-index: 2;
+            opacity: 0.25;
+        }
+        
+        .rain-layer.mid {
+            z-index: 3;
+            opacity: 0.45;
+        }
+        
+        .rain-layer.front {
+            z-index: 4;
+            opacity: 0.65;
+        }
+        
+        .drop {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 45px;
+            background: linear-gradient(transparent, #67e8f9);
+            animation: fall linear infinite;
+            transform: rotate(16deg);
+            border-radius: 50%;
+            box-shadow: 0 0 4px #a5f3fc;
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(-120vh) rotate(16deg);
+            }
+            100% {
+                transform: translateY(120vh) rotate(16deg);
+            }
+        }
+        
+        /* Window */
+        .window {
+            width: 380px;
+            background: #1e2937;
+            border: 6px solid #64748b;
+            border-radius: 12px 12px 8px 8px;
+            box-shadow: 
+                0 0 0 8px #334155,
+                0 30px 70px -10px rgba(15, 23, 42, 0.7),
+                0 0 80px -20px #22d3ee;
+            z-index: 10;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .title-bar {
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            height: 36px;
+            user-select: none;
+        }
+        
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .title::before {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background: #22d3ee;
+            border-radius: 3px;
+            box-shadow: 0 0 8px #67e8f9;
+        }
+        
+        .title-text {
+            margin-top: 2px;
+        }
+        
+        .window-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .win-btn {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 1px solid #0f172a;
+        }
+        
+        .win-btn.close {
+            background: #f43f5e;
+        }
+        
+        .win-btn.min {
+            background: #eab308;
+        }
+        
+        .win-btn.max {
+            background: #22c55e;
+        }
+        
+        .content {
+            background: #0f172a;
+            padding: 32px 30px 40px;
+            position: relative;
+        }
+        
+        /* Clock */
+        .clock {
+            width: var(--clock-size);
+            height: var(--clock-size);
+            background: radial-gradient(circle at 40% 40%, #f8fafc, #e0f2fe);
+            border: 22px solid #1e2937;
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 
+                inset 0 12px 24px rgba(15, 23, 42, 0.3),
+                inset 0 -12px 24px rgba(255,255,255,0.9),
+                0 10px 30px rgba(103, 232, 249, 0.3);
+        }
+        
+        .clock-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 12px solid #334155;
+        }
+        
+        .number {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            font-size: 19px;
+            font-weight: 700;
+            color: #1e2937;
+            padding-top: 18px;
+            text-shadow: 1px 1px 0 #bae6fd;
+        }
+        
+        .hand {
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            transform-origin: bottom center;
+            border-radius: 9999px;
+            z-index: 5;
+            transition: transform 80ms linear;
+        }
+        
+        .hour-hand {
+            width: 10px;
+            height: 78px;
+            background: #1e2937;
+            margin-left: -5px;
+            border-radius: 30px;
+        }
+        
+        .minute-hand {
+            width: 6px;
+            height: 115px;
+            background: #334155;
+            margin-left: -3px;
+            border-radius: 30px;
+        }
+        
+        .second-hand {
+            width: 3px;
+            height: 122px;
+            background: #f43f5e;
+            margin-left: -1.5px;
+            box-shadow: 0 0 8px #fda4af;
+        }
+        
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 22px;
+            height: 22px;
+            background: #1e2937;
+            border: 4px solid #67e8f9;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            box-shadow: 
+                0 0 0 6px #334155,
+                0 0 12px rgba(103, 232, 249, 0.6);
+        }
+        
+        .clock::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #f43f5e;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            box-shadow: 0 0 6px #fda4af;
+        }
+        
+        .label {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 11px;
+            letter-spacing: 2.5px;
+            color: #67e8f9;
+            text-shadow: 0 0 8px #22d3ee;
+            opacity: 0.9;
+        }
+        
+        .glass {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(255,255,255,0.07) 0%,
+                rgba(255,255,255,0) 50%,
+                rgba(255,255,255,0.04) 100%
+            );
+            pointer-events: none;
+            z-index: 30;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Rain background -->
+    <div class="rain">
+        <div class="rain-layer back" id="rain-back"></div>
+        <div class="rain-layer mid" id="rain-mid"></div>
+        <div class="rain-layer front" id="rain-front"></div>
+    </div>
+    
+    <!-- Window -->
+    <div class="window">
+        <!-- Title bar -->
+        <div class="title-bar">
+            <div class="title">
+                <div class="title-text">ANALOG CLOCK</div>
+            </div>
+            <div class="window-buttons">
+                <div class="win-btn min"></div>
+                <div class="win-btn max"></div>
+                <div class="win-btn close"></div>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="clock" id="clock">
+                <div class="clock-face" id="clock-face">
+                    <!-- Numbers inserted by JS -->
+                    <!-- Hands -->
+                    <div class="hand hour-hand" id="hour-hand"></div>
+                    <div class="hand minute-hand" id="minute-hand"></div>
+                    <div class="hand second-hand" id="second-hand"></div>
+                    <div class="center-dot"></div>
+                </div>
+            </div>
+            
+            <div class="label">RAIN PROTOCOL v0.8</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize rain
+        function createRain() {
+            const layers = [
+                { id: 'rain-back', count: 95, minDuration: 0.85, maxDuration: 1.8, width: '1.5px', opacity: 0.3 },
+                { id: 'rain-mid', count: 135, minDuration: 0.45, maxDuration: 1.1, width: '2px', opacity: 0.6 },
+                { id: 'rain-front', count: 65, minDuration: 0.25, maxDuration: 0.65, width: '3px', opacity: 0.85 }
+            ];
+            
+            layers.forEach(layerConfig => {
+                const container = document.getElementById(layerConfig.id);
+                if (!container) return;
+                
+                for (let i = 0; i < layerConfig.count; i++) {
+                    const drop = document.createElement('div');
+                    drop.className = 'drop';
+                    
+                    const left = Math.random() * 102 - 1;
+                    const duration = layerConfig.minDuration + Math.random() * (layerConfig.maxDuration - layerConfig.minDuration);
+                    const delay = Math.random() * -2.5;
+                    const height = 25 + Math.random() * 55;
+                    
+                    drop.style.left = `${left}vw`;
+                    drop.style.width = layerConfig.width;
+                    drop.style.height = `${height}px`;
+                    drop.style.animationDuration = `${duration}s`;
+                    drop.style.animationDelay = `${delay}s`;
+                    drop.style.opacity = (layerConfig.opacity - 0.1 + Math.random() * 0.3).toFixed(2);
+                    
+                    // Random slight variation in angle
+                    const angle = 12 + Math.random() * 9;
+                    drop.style.transform = `rotate(${angle}deg)`;
+                    
+                    container.appendChild(drop);
+                }
+            });
+        }
+        
+        // Initialize clock numbers
+        function createClockNumbers() {
+            const face = document.getElementById('clock-face');
+            const numbers = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+            
+            for (let i = 0; i < 12; i++) {
+                const number = document.createElement('div');
+                number.className = 'number';
+                
+                const rotation = i * 30;
+                number.style.transform = `rotate(${rotation}deg)`;
+                
+                const span = document.createElement('span');
+                span.textContent = numbers[i];
+                span.style.transform = `rotate(-${rotation}deg)`;
+                span.style.display = 'inline-block';
+                
+                number.appendChild(span);
+                face.appendChild(number);
+            }
+        }
+        
+        // Update clock hands
+        let lastTime = '';
+        
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            // Current time string to avoid unnecessary updates
+            const timeString = `${hours}:${minutes}:${seconds}`;
+            if (timeString === lastTime) return;
+            lastTime = timeString;
+            
+            const secondsDeg = (seconds * 6);
+            const minutesDeg = (minutes * 6) + (seconds * 0.1);
+            const hoursDeg = (hours * 30) + (minutes * 0.5);
+            
+            const hourHand = document.getElementById('hour-hand');
+            const minuteHand = document.getElementById('minute-hand');
+            const secondHand = document.getElementById('second-hand');
+            
+            if (hourHand) hourHand.style.transform = `rotate(${hoursDeg}deg)`;
+            if (minuteHand) minuteHand.style.transform = `rotate(${minutesDeg}deg)`;
+            if (secondHand) secondHand.style.transform = `rotate(${secondsDeg}deg)`;
+        }
+        
+        // Main initialization
+        function initialize() {
+            // Create rain drops
+            createRain();
+            
+            // Create clock face numbers
+            createClockNumbers();
+            
+            // Set initial clock state
+            updateClock();
+            
+            // Update clock every 200ms for smooth second hand
+            setInterval(() => {
+                updateClock();
+            }, 200);
+            
+            // Occasional lightning flash effect on background
+            setInterval(() => {
+                if (Math.random() > 0.8) {
+                    const flash = document.createElement('div');
+                    flash.style.position = 'fixed';
+                    flash.style.top = '0';
+                    flash.style.left = '0';
+                    flash.style.width = '100%';
+                    flash.style.height = '100%';
+                    flash.style.background = 'white';
+                    flash.style.opacity = '0.13';
+                    flash.style.zIndex = '5';
+                    flash.style.pointerEvents = 'none';
+                    document.body.appendChild(flash);
+                    
+                    setTimeout(() => {
+                        flash.style.transition = 'opacity 280ms linear';
+                        flash.style.opacity = '0';
+                    }, 40);
+                    
+                    setTimeout(() => {
+                        flash.remove();
+                    }, 800);
+                }
+            }, 3200);
+            
+            // Keyboard easter egg - press R to reset rain
+            let keySequence = '';
+            document.addEventListener('keypress', function(e) {
+                keySequence += e.key.toLowerCase();
+                if (keySequence.length > 8) keySequence = keySequence.slice(-8);
+                
+                if (keySequence.includes('rain')) {
+                    const rains = document.querySelectorAll('.rain-layer');
+                    rains.forEach(rain => {
+                        rain.style.transition = 'opacity 400ms ease';
+                        rain.style.opacity = '0.1';
+                        setTimeout(() => {
+                            rain.style.opacity = '';
+                        }, 600);
+                    });
+                    keySequence = '';
+                }
+            });
+            
+            // Make window slightly draggable (demo only)
+            const windowEl = document.querySelector('.window');
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+            
+            const titleBar = document.querySelector('.title-bar');
+            
+            titleBar.addEventListener('mousedown', function(e) {
+                if (e.target.classList.contains('win-btn')) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                const rect = windowEl.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                windowEl.style.transition = 'none';
+                windowEl.style.position = 'fixed';
+                windowEl.style.left = `${initialLeft}px`;
+                windowEl.style.top = `${initialTop}px`;
+                windowEl.style.margin = '0';
+                windowEl.style.transform = 'none';
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                
+                windowEl.style.left = `${initialLeft + dx}px`;
+                windowEl.style.top = `${initialTop + dy}px`;
+            });
+            
+            document.addEventListener('mouseup', function() {
+                if (!isDragging) return;
+                isDragging = false;
+                windowEl.style.transition = 'box-shadow 0.3s ease';
+            });
+            
+            // Touch support for dragging
+            titleBar.addEventListener('touchstart', function(e) {
+                if (e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                isDragging = true;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                
+                const rect = windowEl.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                windowEl.style.transition = 'none';
+                windowEl.style.position = 'fixed';
+                windowEl.style.left = `${initialLeft}px`;
+                windowEl.style.top = `${initialTop}px`;
+                windowEl.style.margin = '0';
+                windowEl.style.transform = 'none';
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (!isDragging || e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+                
+                windowEl.style.left = `${initialLeft + dx}px`;
+                windowEl.style.top = `${initialTop + dy}px`;
+            });
+            
+            document.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+            
+            console.log('%cRain clock initialized successfully ✓', 'color:#67e8f9; font-family:monospace');
+        }
+        
+        // Boot the application
+        window.onload = initialize;
+    </script>
+</body>
+</html>

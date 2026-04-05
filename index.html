@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Clock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Anime Clock</h1>
+    </header>
+    
+    <main class="content">
+        <div class="image-container">
+            <img id="anime-image" src="https://picsum.photos/id/1015/400/400" alt="Random Anime Girl" class="anime-image">
+        </div>
+        
+        <div class="clock-container">
+            <div class="clock" id="clock">
+                <div class="clock-face">
+                    <!-- Tick marks can be added via CSS or JS, but keeping minimal per requirements -->
+                    <div class="hand hour-hand" id="hour-hand"></div>
+                    <div class="hand minute-hand" id="minute-hand"></div>
+                    <div class="hand second-hand" id="second-hand"></div>
+                    <div class="center-dot"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="controls">
+        <button id="refresh-button" class="refresh-btn">Refresh Anime Image</button>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

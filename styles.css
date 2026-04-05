@@ -1,0 +1,105 @@
+body {
+  background-color: #fff0f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.clock {
+  width: 300px;
+  height: 300px;
+  border: 16px solid #ff99c8;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 
+    0 0 0 18px #ffe4f0,
+    0 15px 35px rgba(255, 105, 180, 0.25),
+    inset 0 4px 12px rgba(255, 182, 193, 0.4);
+  position: relative;
+  margin: 40px auto;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+}
+
+.tick::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 4px;
+  height: 22px;
+  background: #ff69b4;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.tick.major::before {
+  height: 32px;
+  top: 4px;
+  width: 7px;
+  background: #e05a9b;
+}
+
+.hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% 100%;
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+  transition: transform 0.05s cubic-bezier(0.4, 2.3, 0.6, 1);
+  will-change: transform;
+}
+
+.hour-hand {
+  width: 10px;
+  height: 82px;
+  background: #6b2d5e;
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 3;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.minute-hand {
+  width: 6px;
+  height: 115px;
+  background: #c71585;
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 4;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.second-hand {
+  width: 3px;
+  height: 128px;
+  background: #ff69b4;
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 5;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.clock::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  background: #ff1493;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.4);
+}

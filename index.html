@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アニメ時計</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap');
+        
+        :root {
+            --neon-pink: #ff00aa;
+            --neon-cyan: #00ffff;
+            --neon-purple: #9b00ff;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at center, #1a0033 0%, #0a0014 100%);
+            color: var(--neon-cyan);
+            font-family: 'Press Start 2P', system-ui;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle, rgba(255,0,170,0.08) 0%, transparent 70%),
+                radial-gradient(circle, rgba(0,255,255,0.06) 20%, transparent 60%);
+            pointer-events: none;
+            animation: pulse 8s infinite alternate ease-in-out;
+            z-index: 0;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin: 20px 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 
+                0 0 10px var(--neon-pink),
+                0 0 20px var(--neon-pink),
+                0 0 40px var(--neon-cyan),
+                0 0 70px var(--neon-purple);
+            z-index: 2;
+            position: relative;
+        }
+        
+        h1::after {
+            content: 'NEON';
+            position: absolute;
+            top: -18px;
+            right: -60px;
+            font-size: 0.8rem;
+            color: var(--neon-pink);
+            text-shadow: 0 0 15px var(--neon-pink);
+            transform: rotate(12deg);
+            letter-spacing: 2px;
+        }
+        
+        .clock-container {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            background: rgba(10, 0, 30, 0.6);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 30px var(--neon-purple),
+                0 0 60px var(--neon-cyan),
+                inset 0 0 40px rgba(255, 255, 255, 0.1);
+        }
+        
+        canvas {
+            border: 12px solid #220044;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 25px var(--neon-pink),
+                0 0 50px var(--neon-cyan),
+                0 0 80px var(--neon-purple);
+            image-rendering: crisp-edges;
+        }
+        
+        .subtitle {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #ff99ee;
+            text-shadow: 0 0 8px var(--neon-pink);
+            letter-spacing: 4px;
+            opacity: 0.9;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 30px;
+            font-size: 0.7rem;
+            color: #6600aa;
+            text-shadow: 0 0 6px var(--neon-purple);
+        }
+        
+        @keyframes pulse {
+            from { opacity: 0.6; }
+            to { opacity: 1; }
+        }
+        
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #fff;
+            animation: twinkle 1.5s infinite alternate;
+            z-index: 1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>アニメ時計</h1>
+    
+    <div class="clock-container">
+        <canvas id="clock" width="520" height="520"></canvas>
+    </div>
+    
+    <div class="subtitle">ANIME NEON TIME</div>
+    
+    <div class="footer">VIBRANT • DIGITAL • ETERNAL</div>
+    
+    <script>
+        const canvas = document.getElementById('clock');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        
+        const WIDTH = 520;
+        const HEIGHT = 520;
+        const CENTER_X = WIDTH / 2;
+        const CENTER_Y = HEIGHT / 2;
+        const CLOCK_RADIUS = 220;
+        
+        let lastTime = Date.now();
+        
+        // Sparkle positions (static decorative elements)
+        const sparkles = [
+            { x: 80, y: 110, size: 4, color: '#ff00ff' },
+            { x: 410, y: 95, size: 5, color: '#00ffff' },
+            { x: 65, y: 380, size: 3, color: '#cc00ff' },
+            { x: 440, y: 390, size: 6, color: '#00ffcc' },
+            { x: 95, y: 70, size: 4, color: '#ff66ff' },
+            { x: 430, y: 440, size: 3, color: '#66ffff' }
+        ];
+        
+        function drawBackground() {
+            // Clear with slight trail effect for smoothness
+            ctx.fillStyle = 'rgba(15, 0, 35, 0.75)';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            // Background glow ring
+            const outerGlow = ctx.createRadialGradient(
+                CENTER_X, CENTER_Y, CLOCK_RADIUS + 35,
+                CENTER_X + 15, CENTER_Y - 20, CLOCK_RADIUS + 110
+            );
+            outerGlow.addColorStop(0, 'transparent');
+            outerGlow.addColorStop(0.6, 'rgba(155, 0, 255, 0.12)');
+            outerGlow.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = outerGlow;
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CLOCK_RADIUS + 95, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawFace() {
+            // Main face shadow/glow
+            ctx.shadowColor = '#ff00cc';
+            ctx.shadowBlur = 45;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 10;
+            
+            // Outer rim
+            ctx.strokeStyle = '#ff99ee';
+            ctx.lineWidth = 28;
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CLOCK_RADIUS + 18, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Neon rim layer 2
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 25;
+            ctx.shadowOffsetY = 4;
+            ctx.strokeStyle = '#220044';
+            ctx.lineWidth = 18;
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CLOCK_RADIUS + 14, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Face gradient
+            const faceGradient = ctx.createRadialGradient(
+                CENTER_X - 55, CENTER_Y - 55, 20,
+                CENTER_X + 25, CENTER_Y + 35, CLOCK_RADIUS + 12
+            );
+            faceGradient.addColorStop(0, '#3a1a5c');
+            faceGradient.addColorStop(0.6, '#1c0b2e');
+            faceGradient.addColorStop(1, '#110022');
+            
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = '#bb44ff';
+            ctx.fillStyle = faceGradient;
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CLOCK_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner highlight ring
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#88ffff';
+            ctx.strokeStyle = '#aaccff';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CLOCK_RADIUS - 18, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Very inner dark ring
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#0f001f';
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, CLOCK_RADIUS - 42, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawTicks() {
+            ctx.shadowBlur = 12;
+            ctx.lineCap = 'round';
+            
+            for (let i = 0; i < 60; i++) {
+                const angle = (i * Math.PI) / 30 - Math.PI / 2;
+                const isMajor = i % 5 === 0;
+                
+                const innerRad = CLOCK_RADIUS - (isMajor ? 38 : 24);
+                const outerRad = CLOCK_RADIUS - (isMajor ? 6 : 8);
+                
+                const x1 = CENTER_X + Math.cos(angle) * innerRad;
+                const y1 = CENTER_Y + Math.sin(angle) * innerRad;
+                const x2 = CENTER_X + Math.cos(angle) * outerRad;
+                const y2 = CENTER_Y + Math.sin(angle) * outerRad;
+                
+                if (isMajor) {
+                    ctx.strokeStyle = '#ff44cc';
+                    ctx.lineWidth = 6.5;
+                    ctx.shadowColor = '#ff44cc';
+                } else {
+                    ctx.strokeStyle = '#00eeff';
+                    ctx.lineWidth = 2.5;
+                    ctx.shadowColor = '#00eeff';
+                }
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+        }
+        
+        function drawNumbers() {
+            ctx.shadowBlur = 22;
+            ctx.shadowColor = '#ffccff';
+            ctx.fillStyle = '#ffeeff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '900 26px "Press Start 2P", sans-serif';
+            
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * Math.PI) / 6 - Math.PI / 2;
+                const textRadius = CLOCK_RADIUS - 68;
+                
+                const x = CENTER_X + Math.cos(angle) * textRadius;
+                const y = CENTER_Y + Math.sin(angle) * textRadius + 3;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle + Math.PI / 2);
+                ctx.fillText(i.toString(), 0, 0);
+                ctx.restore();
+            }
+            
+            // Japanese character at center top
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = '#ff88ff';
+            ctx.fillStyle = '#ff88dd';
+            ctx.font = '700 17px sans-serif';
+            ctx.fillText('時', CENTER_X, CENTER_Y - CLOCK_RADIUS + 48);
+        }
+        
+        function drawHands(hours, minutes, seconds) {
+            const secondAngle = (seconds * Math.PI) / 30 - Math.PI / 2;
+            const minuteAngle = ((minutes + seconds / 60) * Math.PI) / 30 - Math.PI / 2;
+            const hourAngle = ((hours % 12 + minutes / 60) * Math.PI) / 6 - Math.PI / 2;
+            
+            // HOUR HAND
+            ctx.shadowBlur = 26;
+            ctx.shadowColor = '#cc44ff';
+            ctx.strokeStyle = '#dd77ff';
+            ctx.lineWidth = 13;
+            ctx.lineCap = 'round';
+            
+            const hourLength = CLOCK_RADIUS * 0.52;
+            const hx = CENTER_X + Math.cos(hourAngle) * hourLength;
+            const hy = CENTER_Y + Math.sin(hourAngle) * hourLength;
+            
+            ctx.beginPath();
+            ctx.moveTo(CENTER_X, CENTER_Y);
+            ctx.lineTo(hx, hy);
+            ctx.stroke();
+            
+            // MINUTE HAND
+            ctx.shadowBlur = 22;
+            ctx.shadowColor = '#00ffff';
+            ctx.strokeStyle = '#44ffff';
+            ctx.lineWidth = 8.5;
+            
+            const minLength = CLOCK_RADIUS * 0.78;
+            const mx = CENTER_X + Math.cos(minuteAngle) * minLength;
+            const my = CENTER_Y + Math.sin(minuteAngle) * minLength;
+            
+            ctx.beginPath();
+            ctx.moveTo(CENTER_X + 2, CENTER_Y + 2);
+            ctx.lineTo(mx, my);
+            ctx.stroke();
+            
+            // SECOND HAND
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = '#ff0088';
+            ctx.strokeStyle = '#ff2299';
+            ctx.lineWidth = 3.5;
+            
+            const secLength = CLOCK_RADIUS * 0.86;
+            const sx = CENTER_X + Math.cos(secondAngle) * secLength;
+            const sy = CENTER_Y + Math.sin(secondAngle) * secLength;
+            
+            ctx.beginPath();
+            ctx.moveTo(CENTER_X, CENTER_Y);
+            ctx.lineTo(sx, sy);
+            ctx.stroke();
+            
+            // Second hand tip accent
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#ff88bb';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawCenter() {
+            // Center orb shadow
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ff99ff';
+            
+            // Outer center ring
+            ctx.fillStyle = '#331144';
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 21, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner glowing orb
+            const centerGrad = ctx.createRadialGradient(
+                CENTER_X - 6, CENTER_Y - 7, 3,
+                CENTER_X + 4, CENTER_Y + 4, 19
+            );
+            centerGrad.addColorStop(0, '#aaffff');
+            centerGrad.addColorStop(1, '#ff22cc');
+            
+            ctx.shadowBlur = 22;
+            ctx.shadowColor = '#ff44dd';
+            ctx.fillStyle = centerGrad;
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 14, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Tiny core
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffffff';
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawDecorativeSparkles() {
+            sparkles.forEach((spark, i) => {
+                const timeOffset = Date.now() / (300 + i * 120);
+                const alpha = Math.sin(timeOffset) * 0.3 + 0.7;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = spark.color;
+                
+                ctx.fillStyle = spark.color;
+                ctx.fillRect(spark.x, spark.y, spark.size, spark.size);
+                
+                // Cross sparkle
+                ctx.fillRect(spark.x - 4, spark.y + spark.size / 2 - 1, spark.size + 8, 2);
+                ctx.fillRect(spark.x + spark.size / 2 - 1, spark.y - 4, 2, spark.size + 8);
+                ctx.restore();
+            });
+        }
+        
+        function drawClock() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const milliseconds = now.getMilliseconds();
+            
+            // Subtle smooth second progression
+            const smoothSeconds = seconds + milliseconds / 1000;
+            
+            drawBackground();
+            drawFace();
+            drawTicks();
+            drawNumbers();
+            drawHands(hours, minutes, smoothSeconds);
+            drawCenter();
+            drawDecorativeSparkles();
+        }
+        
+        function animate() {
+            const now = Date.now();
+            // Throttle to ~45fps to avoid overdraw but still feel smooth
+            if (now - lastTime > 22) {
+                drawClock();
+                lastTime = now;
+            }
+            requestAnimationFrame(animate);
+        }
+        
+        function init() {
+            // Initial draw
+            drawClock();
+            // Start animation loop
+            animate();
+            
+            // Occasional canvas refresh on visibility change
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) drawClock();
+            });
+            
+            // Keyboard shortcut for fun: press 'R' to randomize sparkles slightly
+            document.addEventListener('keydown', (e) => {
+                if (e.key.toLowerCase() === 'r') {
+                    sparkles.forEach(s => {
+                        s.x += (Math.random() * 14 - 7);
+                    });
+                    drawClock();
+                }
+            });
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

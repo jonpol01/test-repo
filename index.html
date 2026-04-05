@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月の時計</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Playfair+Display:wght@700&amp;display=swap');
+        
+        :root {
+            --navy: #0a1428;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--navy);
+            color: #e0f2fe;
+            font-family: 'Noto Sans JP', system-ui, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        #stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            background: #f8fafc;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #e0f2fe;
+            animation: twinkle 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        .content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.2rem;
+            margin-bottom: 2rem;
+            color: #e0f2fe;
+            text-shadow: 
+                0 0 20px #67e8f9,
+                0 0 40px #22d3ee;
+            letter-spacing: 8px;
+        }
+        
+        .clock-container {
+            position: relative;
+            width: 420px;
+            height: 420px;
+            margin: 0 auto;
+        }
+        
+        #clock {
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle at 38% 32%, #f1e9d8 8%, #c3c8d4 28%, #64748b 65%, #334155 85%);
+            border: 22px solid #cbd5e1;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 0 30px 10px rgba(103, 232, 249, 0.3),
+                0 25px 50px -12px rgb(0 0 0),
+                inset 0 15px 25px rgba(255,255,255,0.4),
+                inset 0 -15px 25px rgba(15, 23, 42, 0.5);
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        .tick {
+            position: absolute;
+            left: 50%;
+            top: 18px;
+            width: 6px;
+            height: 38px;
+            background: #1e2937;
+            transform-origin: 50% 193px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tick.thick {
+            height: 52px;
+            top: 12px;
+            width: 10px;
+            background: #0f172a;
+        }
+        
+        .number {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e2937;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.6);
+            top: 30px;
+            left: 50%;
+            transform-origin: 50% 170px;
+        }
+        
+        .hand {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform-origin: 100% 50%;
+            border-radius: 6px;
+            box-shadow: 3px 4px 8px rgba(15, 23, 42, 0.5);
+            transition: transform 0.05s cubic-bezier(0.4, 2.2, 0.6, 1);
+        }
+        
+        .hour-hand {
+            width: 38%;
+            height: 14px;
+            background: linear-gradient(to right, #1e2937, #334155);
+            margin-top: -7px;
+            z-index: 4;
+        }
+        
+        .minute-hand {
+            width: 46%;
+            height: 9px;
+            background: linear-gradient(to right, #334155, #64748b);
+            margin-top: -4.5px;
+            z-index: 5;
+        }
+        
+        .second-hand {
+            width: 48%;
+            height: 4px;
+            background: #f43f5e;
+            margin-top: -2px;
+            z-index: 6;
+            box-shadow: 2px 2px 8px #e11d48;
+        }
+        
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 32px;
+            height: 32px;
+            background: #1e2937;
+            border: 7px solid #e0f2fe;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 
+                0 0 0 8px #64748b,
+                0 0 20px rgba(103, 232, 249, 0.5);
+        }
+        
+        .moon {
+            position: absolute;
+            top: -110px;
+            right: -90px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle at 40% 40%, #f8f1e3, #e0d4b8 45%, #c4b89a 80%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 60px 30px #67e8f9,
+                0 0 120px 50px rgba(103, 232, 249, 0.15),
+                inset 35px 25px 30px rgba(255,255,255,0.35),
+                inset -25px -25px 40px rgba(120, 110, 90, 0.4);
+            z-index: 3;
+            opacity: 0.95;
+        }
+        
+        .crater {
+            position: absolute;
+            background: rgba(140, 130, 110, 0.35);
+            border-radius: 50%;
+            box-shadow: inset 4px 4px 8px rgba(80, 70, 60, 0.4);
+        }
+        
+        .digital {
+            margin-top: 2.5rem;
+            font-size: 1.35rem;
+            font-family: monospace;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px 32px;
+            border-radius: 50px;
+            display: inline-block;
+            letter-spacing: 4px;
+            color: #67e8f9;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0);
+            border: 1px solid #64748b;
+        }
+        
+        .label {
+            font-size: 0.95rem;
+            margin-top: 1rem;
+            opacity: 0.7;
+            letter-spacing: 3px;
+            color: #a5b4fc;
+        }
+        
+        @media (max-width: 480px) {
+            #clock {
+                width: 320px;
+                height: 320px;
+            }
+            
+            .clock-container {
+                width: 320px;
+                height: 320px;
+            }
+            
+            h1 {
+                font-size: 2.4rem;
+            }
+            
+            .moon {
+                width: 100px;
+                height: 100px;
+                top: -80px;
+                right: -60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="stars"></div>
+    
+    <div class="content">
+        <h1>月の時計</h1>
+        
+        <div class="clock-container">
+            <!-- Moon decoration -->
+            <div class="moon" id="moon">
+                <div class="crater" style="width: 32px; height: 28px; top: 38px; left: 32px;"></div>
+                <div class="crater" style="width: 22px; height: 22px; top: 75px; left: 82px;"></div>
+                <div class="crater" style="width: 18px; height: 26px; top: 55px; left: 105px;"></div>
+                <div class="crater" style="width: 35px; height: 18px; top: 95px; left: 45px;"></div>
+            </div>
+            
+            <div id="clock">
+                <!-- Ticks and numbers created by JS -->
+                <div class="hand hour-hand" id="hour-hand"></div>
+                <div class="hand minute-hand" id="minute-hand"></div>
+                <div class="hand second-hand" id="second-hand"></div>
+                <div class="center-dot"></div>
+            </div>
+        </div>
+        
+        <div class="digital" id="digital">88:88:88</div>
+        <div class="label">LUNAR TIME</div>
+    </div>
+
+    <script>
+        // DOM elements
+        const clock = document.getElementById('clock');
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const secondHand = document.getElementById('second-hand');
+        const digitalEl = document.getElementById('digital');
+        const starsContainer = document.getElementById('stars');
+        
+        // Create stars
+        function createStars() {
+            for (let i = 0; i < 280; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3.5 + 0.8;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 85}vh`;
+                
+                const duration = Math.random() * 3200 + 2100;
+                star.style.animationDuration = `${duration}ms`;
+                
+                const delay = Math.random() * -4000;
+                star.style.animationDelay = `${delay}ms`;
+                
+                // Occasionally make some brighter stars
+                if (Math.random() > 0.85) {
+                    star.style.boxShadow = '0 0 10px #f0f9ff';
+                    star.style.opacity = '0.95';
+                } else {
+                    star.style.opacity = Math.random() * 0.65 + 0.35;
+                }
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Create clock ticks and numbers
+        function createClockFace() {
+            // 12 major ticks + numbers
+            for (let i = 1; i <= 12; i++) {
+                // Tick
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                
+                if (i % 3 === 0) {
+                    tick.classList.add('thick');
+                }
+                
+                const angle = (i * 30) - 90;
+                tick.style.transform = `rotate(${angle}deg)`;
+                clock.appendChild(tick);
+                
+                // Number for every 3 hours (12, 3, 6, 9)
+                if (i % 3 === 0) {
+                    const num = document.createElement('div');
+                    num.className = 'number';
+                    num.style.transform = `rotate(${angle}deg)`;
+                    
+                    let numText = i.toString();
+                    if (i === 12) numText = 'Ⅻ';
+                    if (i === 3) numText = 'Ⅲ';
+                    if (i === 6) numText = 'Ⅵ';
+                    if (i === 9) numText = 'Ⅸ';
+                    
+                    num.textContent = numText;
+                    num.style.transform = `rotate(${angle}deg) translate(0, -155px) rotate(-${angle}deg)`;
+                    clock.appendChild(num);
+                }
+            }
+            
+            // Minor ticks
+            for (let i = 0; i < 60; i++) {
+                if (i % 5 !== 0) {
+                    const minor = document.createElement('div');
+                    minor.className = 'tick';
+                    minor.style.height = '18px';
+                    minor.style.top = '26px';
+                    minor.style.width = '2px';
+                    minor.style.background = '#475569';
+                    const angle = (i * 6) - 90;
+                    minor.style.transform = `rotate(${angle}deg)`;
+                    clock.appendChild(minor);
+                }
+            }
+        }
+        
+        function setClock() {
+            const now = new Date();
+            
+            // Seconds
+            const seconds = now.getSeconds();
+            const secondsDeg = (seconds * 6) + 90;
+            secondHand.style.transform = `rotate(${secondsDeg}deg)`;
+            
+            // Minutes
+            const minutes = now.getMinutes();
+            const minutesDeg = (minutes * 6) + (seconds * 0.1) + 90;
+            minuteHand.style.transform = `rotate(${minutesDeg}deg)`;
+            
+            // Hours
+            const hours = now.getHours();
+            const hoursDeg = ((hours % 12) * 30) + (minutes * 0.5) + 90;
+            hourHand.style.transform = `rotate(${hoursDeg}deg)`;
+            
+            // Digital display
+            let hourStr = hours < 10 ? '0' + hours : hours;
+            let minStr = minutes < 10 ? '0' + minutes : minutes;
+            let secStr = seconds < 10 ? '0' + seconds : seconds;
+            digitalEl.textContent = `${hourStr}:${minStr}:${secStr}`;
+        }
+        
+        // Initialize everything
+        function initialize() {
+            createStars();
+            createClockFace();
+            
+            // Set initial clock state
+            setClock();
+            
+            // Update clock every second
+            setInterval(setClock, 1000);
+            
+            // Add subtle rotation to moon occasionally
+            const moon = document.getElementById('moon');
+            let moonAngle = 0;
+            setInterval(() => {
+                moonAngle = Math.random() * 4 - 2;
+                moon.style.transform = `rotate(${moonAngle}deg)`;
+            }, 6500);
+            
+            // Keyboard shortcut for fullscreen (fun)
+            document.addEventListener('keydown', function(e) {
+                if (e.key === '/' && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+                    e.preventDefault();
+                    const content = document.querySelector('.content');
+                    content.style.transition = 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    content.style.transform = 'scale(1.08)';
+                    setTimeout(() => {
+                        content.style.transform = 'scale(1)';
+                    }, 420);
+                }
+            });
+            
+            // Make sure hands have initial rotation
+            hourHand.style.transform = 'rotate(90deg)';
+            minuteHand.style.transform = 'rotate(90deg)';
+            secondHand.style.transform = 'rotate(90deg)';
+        }
+        
+        // Boot the app
+        window.onload = initialize;
+    </script>
+</body>
+</html>

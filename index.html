@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analog Clock</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&amp;display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+        }
+        
+        .clock-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 28px;
+            color: #2c3e50;
+            letter-spacing: 2px;
+        }
+        
+        canvas {
+            border: 16px solid #2c3e50;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                        inset 0 0 30px rgba(0, 0, 0, 0.1);
+            background: #f8f8f8;
+        }
+        
+        .digital-time {
+            margin-top: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 4px;
+            font-family: monospace;
+            background: #ecf0f1;
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            min-width: 140px;
+        }
+        
+        .info {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <h1>ANALOG CLOCK</h1>
+        <canvas id="clock" width="380" height="380"></canvas>
+        <div class="digital-time" id="digital">00:00:00</div>
+        <div class="info">Click canvas to toggle seconds hand</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('clock');
+        const ctx = canvas.getContext('2d');
+        const digitalEl = document.getElementById('digital');
+        
+        let radius = 170;
+        let showSeconds = true;
+        
+        function drawClock() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const milliseconds = now.getMilliseconds();
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Move to center
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            
+            // Draw outer rim
+            ctx.beginPath();
+            ctx.arc(0, 0, radius + 14, 0, Math.PI * 2);
+            ctx.fillStyle = '#2c3e50';
+            ctx.fill();
+            
+            // Draw face
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fill();
+            
+            // Inner shadow ring
+            ctx.beginPath();
+            ctx.arc(0, 0, radius - 8, 0, Math.PI * 2);
+            ctx.strokeStyle = '#bdc3c7';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Draw hour markers
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 8;
+            for (let i = 0; i < 12; i++) {
+                ctx.save();
+                ctx.rotate((Math.PI * 2 / 12) * i);
+                ctx.beginPath();
+                ctx.moveTo(0, -radius + 18);
+                ctx.lineTo(0, -radius + 42);
+                ctx.stroke();
+                ctx.restore();
+            }
+            
+            // Draw minute markers
+            ctx.strokeStyle = '#7f8c8d';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 60; i++) {
+                if (i % 5 === 0) continue; // skip where hour markers are
+                ctx.save();
+                ctx.rotate((Math.PI * 2 / 60) * i);
+                ctx.beginPath();
+                ctx.moveTo(0, -radius + 22);
+                ctx.lineTo(0, -radius + 36);
+                ctx.stroke();
+                ctx.restore();
+            }
+            
+            // Draw numbers
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 22px Roboto, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * Math.PI * 2 / 12) - (Math.PI / 2);
+                const x = Math.cos(angle) * (radius - 65);
+                const y = Math.sin(angle) * (radius - 65);
+                ctx.fillText(i.toString(), x, y + 2);
+            }
+            
+            // Calculate angles
+            const secondAngle = ((seconds * 6) + (milliseconds * 0.006)) * (Math.PI / 180);
+            const minuteAngle = ((minutes * 6) + (seconds * 0.1)) * (Math.PI / 180);
+            const hourAngle = ((hours * 30) + (minutes * 0.5)) * (Math.PI / 180);
+            
+            // Draw hour hand
+            ctx.save();
+            ctx.rotate(hourAngle);
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 6;
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 12);
+            ctx.lineTo(0, -radius * 0.48);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Draw minute hand
+            ctx.save();
+            ctx.rotate(minuteAngle);
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 6;
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 14);
+            ctx.lineTo(0, -radius * 0.72);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Draw second hand
+            if (showSeconds) {
+                ctx.save();
+                ctx.rotate(secondAngle);
+                ctx.shadowColor = 'rgba(231, 76, 60, 0.6)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 4;
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(0, 18);
+                ctx.lineTo(0, -radius * 0.82);
+                ctx.stroke();
+                
+                // Second hand tip
+                ctx.beginPath();
+                ctx.arc(0, -radius * 0.82, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#e74c3c';
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            // Center hub
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 4;
+            
+            // Outer circle
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fillStyle = '#2c3e50';
+            ctx.fill();
+            
+            // Inner circle
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Update digital display
+            const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            digitalEl.textContent = timeString;
+        }
+        
+        // Animation loop
+        function animate() {
+            drawClock();
+            requestAnimationFrame(animate);
+        }
+        
+        // Click handler to toggle seconds hand
+        canvas.addEventListener('click', () => {
+            showSeconds = !showSeconds;
+        });
+        
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 's' || e.key === 'S') {
+                showSeconds = !showSeconds;
+            }
+        });
+        
+        // Initialize
+        function init() {
+            // Ensure canvas is properly sized
+            radius = Math.min(canvas.width, canvas.height) / 2 - 30;
+            animate();
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
+<!-- served by nginx -->

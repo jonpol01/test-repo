@@ -1,0 +1,9 @@
+"""Main entrypoint for the test repository."""
+
+def main() -> None:
+    """Run the main application logic."""
+    print("Hello from jonpol01/test-repo!")
+
+
+if __name__ == "__main__":
+    main()

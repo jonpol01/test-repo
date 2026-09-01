@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Poll the served page until nginx answers, for use as a container healthcheck.
-PORT="${PORT:-8080}"
+PORT="${PORT:-80}"
 TRIES="${TRIES:-30}"
 
 i=0
